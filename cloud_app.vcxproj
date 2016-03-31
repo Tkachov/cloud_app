@@ -142,18 +142,20 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="cloud\dropbox_storage.cpp" />
-    <ClCompile Include="CurlSingleThread.cpp" />
+    <ClCompile Include="curl\single_threaded_curl.cpp" />
     <ClCompile Include="json\utils.cpp" />
     <ClCompile Include="machine.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="curl\request.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cloud\storage.h" />
     <ClInclude Include="cloud\dropbox_storage.h" />
     <ClInclude Include="base_exception.h" />
-    <ClInclude Include="CurlSingleThread.h" />
+    <ClInclude Include="curl\single_threaded_curl.h" />
     <ClInclude Include="json\utils.h" />
     <ClInclude Include="machine.h" />
+    <ClInclude Include="curl\request.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

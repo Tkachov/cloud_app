@@ -11,6 +11,8 @@ using namespace std;
 
 #include "cloud\dropbox_storage.h"
 #include "base_exception.h"
+#include "curl\request.h"
+#include "json\utils.h"
 using cloud::dropbox::dropbox_storage;
 
 machine::machine() : working(true) {
@@ -70,12 +72,31 @@ bool machine::ask(answers_vector& answers) {
 	return false;
 }
 
+string load(string name) {
+	string n;
+	ifstream fin(name.c_str());
+	fin >> n;
+	fin.close();
+	return n;
+}
+
+string machine::shorten_link(string& link) {
+	static const string GOOGLE_URL_SHORTENER_KEY = load("private/google_url_shortener/api_key.txt");
+	curl::request rq("https://www.googleapis.com/urlshortener/v1/url?key="+GOOGLE_URL_SHORTENER_KEY);
+	rq.add_header("Content-Type: application/json");
+	rq.add_post_field(string("{\"longUrl\": \"")+link+string("\"}"));
+
+	string data = rq.execute();
+	string new_link = json::get_value(data, "id");
+	if (new_link == "") return link;
+	return new_link;
+}
+
 //answers handlers
 
-void machine::turn_on() {
-	//TODO: url shortener	
+void machine::turn_on() {	
 	cout << "Navigate to this URL and press \"Allow\":\n";
-	cout << dropbox_storage::get_auth_link() << "\n\n";
+	cout << shorten_link(dropbox_storage::get_auth_link()) << "\n\n";
 	cout.flush();
 }
 

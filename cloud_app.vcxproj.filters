@@ -24,10 +24,13 @@
     <ClCompile Include="cloud\dropbox_storage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="CurlSingleThread.cpp">
+    <ClCompile Include="json\utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="json\utils.cpp">
+    <ClCompile Include="curl\request.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="curl\single_threaded_curl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,7 +50,10 @@
     <ClInclude Include="json\utils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="CurlSingleThread.h">
+    <ClInclude Include="curl\request.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="curl\single_threaded_curl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

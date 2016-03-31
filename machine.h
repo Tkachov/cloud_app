@@ -15,9 +15,8 @@ class machine {
 	storage* current_storage;
 
 	//utils
-	bool ask(answers_vector& answers);
-	string load(string fn);	
-	bool parse_json(string json);
+	bool ask(answers_vector& answers);		
+	string shorten_link(string& link);
 
 	//answers handlers
 	void info();
