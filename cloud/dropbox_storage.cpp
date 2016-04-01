@@ -7,10 +7,10 @@ using std::ifstream;
 using std::cout;
 
 #include <curl/curl.h>
+#include "../json/json11.hpp"
+using namespace json11;
 
 #include "../curl/request.h"
-#include "../json/utils.h"
-using namespace json;
 
 namespace cloud { namespace dropbox {
 
@@ -48,10 +48,15 @@ dropbox_storage* dropbox_storage::connect_with_code(string code) {
 	rq.add_post_field("client_id=" + KEY);
 	rq.add_post_field("client_secret=" + SECRET);
 	rq.add_post_field("&redirect_uri=http%3A%2F%2Flocalhost%3A12345%2F");
-	
+		
 	string data = rq.execute();
-	string token = json::get_value(data, "access_token");
-	string uid = json::get_value(data, "uid");
+	string error_message;
+	Json json = Json::parse(data, error_message);
+	if(error_message.size())
+		throw base_exception(error_message);
+
+	string token = json["access_token"].string_value();
+	string uid = json["uid"].string_value();
 
 	if (token == "" || uid == "")
 		throw base_exception(data);
@@ -98,6 +103,7 @@ bool dropbox_storage::upload(string file) {
 	bool autorename = false;
 	bool mute = false;
 
+	//TODO: json11
 	api_args = "{" +
 		string("\"path\": \"") + path + string("\", ") +
 		"\"mode\": \"" + mode + "\", " +
@@ -113,6 +119,53 @@ bool dropbox_storage::upload(string file) {
 	cout << rq.execute();
 
 	return false;
+}
+
+vector<string> dropbox_storage::list_directory(string directory, bool recursive) {
+	curl::request rq("https://api.dropboxapi.com/2/files/list_folder");
+	rq.add_header("Authorization: Bearer " + token);
+	rq.add_header("Content-Type: application/json");
+
+	Json json = Json::object({
+		{ "path", directory }, //"path": directory,
+		{ "recursive", recursive },
+		{ "include_media_info", false },
+		{ "include_deleted", false },
+	});
+
+	rq.add_post_field(json.dump());
+
+	string data = rq.execute();
+	string error_message;
+	Json answer = Json::parse(data, error_message);
+	if (error_message.size()) throw base_exception("Json Error: " + error_message + string("\n\n") + data);
+
+	vector<string> result;
+	bool has_more = true;
+	while(has_more) {
+		for(auto item: answer["entries"].array_items()) {
+			result.push_back(item["path_display"].string_value());
+		}
+		has_more = answer["has_more"].bool_value();
+
+		if (has_more) {
+			curl::request rq("https://api.dropboxapi.com/2/files/list_folder/continue");
+			rq.add_header("Authorization: Bearer " + token);
+			rq.add_header("Content-Type: application/json");
+
+			Json json = Json::object({
+				{ "cursor", answer["cursor"].string_value() },
+			});
+
+			rq.add_post_field(json.dump());
+			
+			data = rq.execute();
+			answer = Json::parse(data, error_message);
+			if (error_message.size()) throw base_exception("Json Error: " + error_message + string("\n\n") + data);
+		}
+	}
+
+	return result;
 }
 
 void dropbox_storage::save(ofstream& fout) {

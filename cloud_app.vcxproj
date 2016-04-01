@@ -143,7 +143,7 @@
   <ItemGroup>
     <ClCompile Include="cloud\dropbox_storage.cpp" />
     <ClCompile Include="curl\single_threaded_curl.cpp" />
-    <ClCompile Include="json\utils.cpp" />
+    <ClCompile Include="json\json11.cpp" />
     <ClCompile Include="machine.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="curl\request.cpp" />
@@ -154,7 +154,7 @@
     <ClInclude Include="cloud\dropbox_storage.h" />
     <ClInclude Include="base_exception.h" />
     <ClInclude Include="curl\single_threaded_curl.h" />
-    <ClInclude Include="json\utils.h" />
+    <ClInclude Include="json\json11.hpp" />
     <ClInclude Include="machine.h" />
     <ClInclude Include="curl\request.h" />
     <ClInclude Include="cloud\storage_manager.h" />

@@ -1,8 +1,10 @@
 #pragma once
 #include <fstream>
 #include <string>
+#include <vector>
 using std::ofstream;
 using std::string;
+using std::vector;
 
 #include "../base_exception.h"
 
@@ -13,6 +15,7 @@ public:
 	//api
 	virtual string info() = 0;
 	virtual bool upload(string file) = 0;
+	virtual vector<string> list_directory(string directory, bool recursive = false) = 0; //TODO: introduce file/directory clases and use vector<file> or directory
 
 	//utils
 	virtual void save(ofstream& fout) = 0;

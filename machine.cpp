@@ -8,11 +8,12 @@
 using namespace std;
 
 #include <curl/curl.h>
+#include "json\json11.hpp"
+using namespace json11;
 
 #include "cloud\dropbox_storage.h"
 #include "base_exception.h"
 #include "curl\request.h"
-#include "json\utils.h"
 using cloud::dropbox::dropbox_storage;
 
 machine::machine() : working(true) {
@@ -46,6 +47,7 @@ void machine::work() {
 	} else {
 		answers.push_back(std::make_pair("See Dropbox account info", &machine::info));
 		answers.push_back(std::make_pair("Upload a file", &machine::upload));
+		answers.push_back(std::make_pair("List directory", &machine::list));
 	}
 	answers.push_back(std::make_pair("Quit", &machine::quit));
 	ask(answers);
@@ -87,9 +89,11 @@ string machine::shorten_link(string& link) {
 	rq.add_header("Content-Type: application/json");
 	rq.add_post_field(string("{\"longUrl\": \"")+link+string("\"}"));
 
-	string data = rq.execute();
-	string new_link = json::get_value(data, "id");
-	if (new_link == "") return link;
+	string error_message;
+	Json json = Json::parse(rq.execute(), error_message);	
+	string new_link = "";
+	if(!error_message.size()) new_link = json["id"].string_value();
+	if(new_link == "") return link;
 	return new_link;
 }
 
@@ -134,6 +138,33 @@ void machine::upload() {
 
 	try {
 		manager.get_current_storage()->upload(code);
+	}
+	catch (base_exception& e) {
+		cout << e.what() << "\n";
+	}
+	catch (...) {
+		cout << "failed\n";
+	}
+}
+
+void machine::list() {
+	cin.get(); //that's last line with cmd index
+
+	cout << "Enter directory name:\n";
+	string dirname;
+
+	const int k64 = 65536; //64k is enough for everyone's folder names?
+	char buf[k64];
+	cin.getline(buf, k64);
+	dirname = buf;		
+
+	cout << "Recursive? (anything but 'y' and 'yes' is a 'no')\n";
+	string ans;
+	cin >> ans;	
+
+	try {
+		vector<string> files = manager.get_current_storage()->list_directory(dirname, ans=="y" || ans=="yes");
+		for (auto f : files) cout << f << "\n";
 	}
 	catch (base_exception& e) {
 		cout << e.what() << "\n";

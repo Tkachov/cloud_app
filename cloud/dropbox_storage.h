@@ -26,6 +26,8 @@ public:
 
 	virtual string info();
 	virtual bool upload(string file);
+	virtual vector<string> list_directory(string directory, bool recursive);
+
 	virtual void save(ofstream& fout);
 	virtual string name() const;
 };
