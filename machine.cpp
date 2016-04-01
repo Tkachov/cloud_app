@@ -45,6 +45,7 @@ void machine::work() {
 		answers.push_back(std::make_pair("Provide Dropbox OAuth code", &machine::connect));
 	} else {
 		answers.push_back(std::make_pair("See Dropbox account info", &machine::info));
+		answers.push_back(std::make_pair("Upload a file", &machine::upload));
 	}
 	answers.push_back(std::make_pair("Quit", &machine::quit));
 	ask(answers);
@@ -123,4 +124,21 @@ void machine::info() {
 	cout << current_storage->info();
 	cout << "\n\n";
 	cout.flush();	
+}
+
+void machine::upload() {
+	cout << "Enter file name:\n";
+	string code;
+	cin >> code;
+	if (code == "") return; //cancelled
+
+	try {
+		current_storage->upload(code);
+	}
+	catch (base_exception& e) {
+		cout << e.what() << "\n";
+	}
+	catch (...) {
+		cout << "failed\n";
+	}
 }

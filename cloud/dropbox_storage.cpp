@@ -69,6 +69,45 @@ string dropbox_storage::info() {
 	return rq.execute();	
 }
 
+bool dropbox_storage::upload(string file) {
+	string file_binary_contents;
+	ifstream fin(file.c_str(), std::ifstream::binary);
+	char buf[4096];
+	while (!fin.eof()) {
+		fin.read(buf, 4096);
+		file_binary_contents.append(string(buf, fin.gcount()));
+	}
+	fin.close();
+
+	string api_args;
+
+	string path = file;
+	if (file.find('/') != -1)
+		path = file.substr(file.rfind('/')+1);
+	if (file.find('\\') != -1)
+		path = file.substr(file.rfind('\\')+1);
+	path = "/" + path;
+	string mode = "overwrite";
+	bool autorename = false;
+	bool mute = false;
+
+	api_args = "{" +
+		string("\"path\": \"") + path + string("\", ") +
+		"\"mode\": \"" + mode + "\", " +
+		"\"autorename\": " + (autorename?"true":"false") + ", "
+		"\"mute\": " + (mute?"true":"false") +
+	"}";
+
+	curl::request rq("https://content.dropboxapi.com/2/files/upload");
+	rq.add_header("Authorization: Bearer " + token);
+	rq.add_header("Dropbox-API-Arg", api_args);
+	rq.add_header("Content-Type: application/octet-stream");
+	rq.add_post_field(file_binary_contents);
+	cout << rq.execute();
+
+	return false;
+}
+
 //private
 
 dropbox_storage::dropbox_storage(string& gathered_token, string& gathered_uid) {

@@ -21,6 +21,7 @@ public:
 	~dropbox_storage();
 
 	virtual string info();
+	virtual bool upload(string file);
 };
 
 } } //namespace cloud::dropbox

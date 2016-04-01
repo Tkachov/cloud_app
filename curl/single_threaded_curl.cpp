@@ -57,7 +57,7 @@ string single_threaded_curl::execute(request& rq) {
 	curl_easy_setopt(curl, CURLOPT_URL, rq.get_url().c_str());	
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &writeCallback);
 	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, rq.get_headers_list());
-	//curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, rq.get_post_fields().length());
+	curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, rq.get_post_fields().length());
 	curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, rq.get_post_fields().c_str());
 	//curl_easy_setopt(curl, CURLOPT_POSTFIELDS, rq.get_post_fields().c_str());
 	//curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);

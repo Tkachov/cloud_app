@@ -9,6 +9,7 @@ namespace cloud {
 class storage {
 public:	
 	virtual string info() = 0;
+	virtual bool upload(string file) = 0;
 
 	class storage_auth_exception: public base_exception {
 	public:

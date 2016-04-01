@@ -22,6 +22,7 @@ class machine {
 	void info();
 	void turn_on();
 	void connect();
+	void upload();
 	void quit() { working = false; }
 
 public:
