@@ -147,6 +147,7 @@
     <ClCompile Include="machine.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="curl\request.cpp" />
+    <ClCompile Include="cloud\storage_manager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cloud\storage.h" />
@@ -156,6 +157,7 @@
     <ClInclude Include="json\utils.h" />
     <ClInclude Include="machine.h" />
     <ClInclude Include="curl\request.h" />
+    <ClInclude Include="cloud\storage_manager.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

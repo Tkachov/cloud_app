@@ -59,6 +59,13 @@ dropbox_storage* dropbox_storage::connect_with_code(string code) {
 	return new dropbox_storage(token, uid);
 }
 
+dropbox_storage* dropbox_storage::load(ifstream& fin) {
+	string token, uid;
+	fin >> token;
+	fin >> uid;
+	return new dropbox_storage(token, uid);
+}
+
 //non-static public:
 
 dropbox_storage::~dropbox_storage() {}
@@ -106,6 +113,18 @@ bool dropbox_storage::upload(string file) {
 	cout << rq.execute();
 
 	return false;
+}
+
+void dropbox_storage::save(ofstream& fout) {
+	fout << "dropbox\n";
+	fout << token << "\n";
+	fout << uid << "\n";
+}
+
+string dropbox_storage::name() const {
+	//TODO: when storage is created, request user info and keep his username somewhere
+	//saving this username into storage_manager's file would make it easier to find necessary service
+	return "dropbox<" + uid + ">";
 }
 
 //private

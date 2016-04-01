@@ -1,4 +1,7 @@
 #pragma once
+#include <fstream>
+using std::ifstream;
+
 #include "storage.h"
 using namespace cloud;
 
@@ -11,6 +14,7 @@ class dropbox_storage: public storage {
 public:
 	static string get_auth_link();
 	static dropbox_storage* connect_with_code(string code);
+	static dropbox_storage* load(ifstream& fin);
 
 private:
 	string token, uid;
@@ -22,6 +26,8 @@ public:
 
 	virtual string info();
 	virtual bool upload(string file);
+	virtual void save(ofstream& fout);
+	virtual string name() const;
 };
 
 } } //namespace cloud::dropbox

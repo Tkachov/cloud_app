@@ -33,6 +33,9 @@
     <ClCompile Include="curl\single_threaded_curl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cloud\storage_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="machine.h">
@@ -54,6 +57,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="curl\single_threaded_curl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cloud\storage_manager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

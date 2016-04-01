@@ -16,7 +16,7 @@ using namespace std;
 using cloud::dropbox::dropbox_storage;
 
 machine::machine() : working(true) {
-	current_storage = 0;
+	manager.load_settings();
 
 	cout << "+=================================================+\n";
 	cout << "|                                                 |\n";
@@ -36,11 +36,11 @@ machine::machine() : working(true) {
 	cout << "\n";
 };
 
-machine::~machine() { delete current_storage;  }
+machine::~machine() {}
 
 void machine::work() {
 	answers_vector answers;
-	if (!current_storage) {
+	if (!manager.get_current_storage()) {
 		answers.push_back(std::make_pair("Get Dropbox OAuth URL", &machine::turn_on));
 		answers.push_back(std::make_pair("Provide Dropbox OAuth code", &machine::connect));
 	} else {
@@ -108,7 +108,7 @@ void machine::connect() {
 	if (code == "") return; //cancelled
 
 	try {
-		current_storage = dropbox_storage::connect_with_code(code);
+		manager.add_storage(dropbox_storage::connect_with_code(code));
 	}
 	catch (base_exception& e) {
 		cout << e.what() << "\n";
@@ -121,7 +121,7 @@ void machine::connect() {
 void machine::info() {	
 	cout << "\nThis is your account info:\n\n";
 	cout.flush();
-	cout << current_storage->info();
+	cout << manager.get_current_storage()->info();
 	cout << "\n\n";
 	cout.flush();	
 }
@@ -133,7 +133,7 @@ void machine::upload() {
 	if (code == "") return; //cancelled
 
 	try {
-		current_storage->upload(code);
+		manager.get_current_storage()->upload(code);
 	}
 	catch (base_exception& e) {
 		cout << e.what() << "\n";

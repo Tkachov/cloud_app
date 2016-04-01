@@ -5,14 +5,16 @@ using std::string;
 using std::vector;
 using std::pair;
 
+#include "cloud/storage_manager.h"
 #include "cloud/storage.h"
+using cloud::storage_manager;
 using cloud::storage;
 
 class machine {
 	typedef vector< pair<string, void(machine::*)()> > answers_vector;
 
 	bool working;
-	storage* current_storage;
+	storage_manager manager;
 
 	//utils
 	bool ask(answers_vector& answers);		
