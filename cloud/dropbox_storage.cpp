@@ -168,6 +168,26 @@ vector<string> dropbox_storage::list_directory(string directory, bool recursive)
 	return result;
 }
 
+bool dropbox_storage::download(string file) {
+	Json json = Json::object({
+		{ "path", file },
+	});
+
+	curl::request rq("https://content.dropboxapi.com/2/files/download");
+	rq.add_header("Authorization: Bearer " + token);
+	rq.add_header("Dropbox-API-Arg", json.dump());
+	rq.add_header("Content-Type: "); //required to be empty (as we do POST, it's usually app/form-url-encoded)
+	
+	string data = rq.execute();
+
+	string local_filename = "downloads" + file;
+	ofstream fout(local_filename.c_str(), std::ifstream::binary);
+	fout.write(data.c_str(), data.length());
+	fout.close();
+
+	return false;
+}
+
 void dropbox_storage::save(ofstream& fout) {
 	fout << "dropbox\n";
 	fout << token << "\n";

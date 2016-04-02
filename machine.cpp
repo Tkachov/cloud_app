@@ -48,6 +48,7 @@ void machine::work() {
 		answers.push_back(std::make_pair("See Dropbox account info", &machine::info));
 		answers.push_back(std::make_pair("Upload a file", &machine::upload));
 		answers.push_back(std::make_pair("List directory", &machine::list));
+		answers.push_back(std::make_pair("Download file", &machine::download));
 	}
 	answers.push_back(std::make_pair("Quit", &machine::quit));
 	ask(answers);
@@ -165,6 +166,28 @@ void machine::list() {
 	try {
 		vector<string> files = manager.get_current_storage()->list_directory(dirname, ans=="y" || ans=="yes");
 		for (auto f : files) cout << f << "\n";
+	}
+	catch (base_exception& e) {
+		cout << e.what() << "\n";
+	}
+	catch (...) {
+		cout << "failed\n";
+	}
+}
+
+void machine::download() {
+	cin.get(); //that's last line with cmd index
+
+	cout << "Enter file name:\n";
+	string filename;
+
+	const int k64 = 65536; //64k is enough for everyone
+	char buf[k64];
+	cin.getline(buf, k64);
+	filename = buf;
+
+	try {
+		manager.get_current_storage()->download(filename);		
 	}
 	catch (base_exception& e) {
 		cout << e.what() << "\n";
