@@ -11,6 +11,7 @@ namespace files {
 
 	class local_storage {
 	public:
+		static file_record get_file_by_path(string path);
 		static vector<file_record> list_directory(string path, bool recursive = true, bool list_dots = false);		
 	};
 

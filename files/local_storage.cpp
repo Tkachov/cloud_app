@@ -3,7 +3,32 @@
 
 #include "../base_exception.h"
 
+//#include <time.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdio.h>
+#include <errno.h>
+
 namespace files {
+
+file_record local_storage::get_file_by_path(string path) {
+	struct _stat buf;
+	int result;	
+	char* filename = "crt_stat.c";	
+	
+	result = _stat(path.c_str(), &buf);
+	if (result != 0)
+		throw base_exception("_stat");
+
+	return file_record(path, buf.st_mtime); //hell yeah -- that's UNIX timestamp
+
+	/*
+	//this thingie prints date/time in "Thu Feb 07 14:39:36 2002" format
+	char timebuf[26];
+	errno_t err = ctime_s(timebuf, 26, &buf.st_mtime);
+	printf("Time modified : %s", timebuf);
+	*/
+}
 
 vector<file_record> local_storage::list_directory(string path, bool recursive, bool list_dots) {
 	vector<file_record> result;
@@ -30,7 +55,8 @@ vector<file_record> local_storage::list_directory(string path, bool recursive, b
 					queue.push_back(new_dir);
 				}
 
-				result.push_back(file_record(prefix + string(listed_file->d_name), listed_file->d_name, 0));
+				//result.push_back(file_record(prefix + string(listed_file->d_name), listed_file->d_name, 0));
+				result.push_back(get_file_by_path(prefix + string(listed_file->d_name)));
 			}
 
 			closedir(directory);

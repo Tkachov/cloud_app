@@ -201,7 +201,7 @@ void machine::download() {
 void machine::do_sync() {
 	try {
 		//just hardcoded paths for now
-		manager.get_current_storage()->sync("downloads/saves/", "/saves/", true); //recursive MIGHT BE working now, so I used false to not confuse anyone
+		manager.get_current_storage()->sync("downloads/saves/", "/saves/");
 	}
 	catch (base_exception& e) {
 		cout << e.what() << "\n";

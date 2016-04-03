@@ -172,6 +172,124 @@ vector<string> dropbox_storage::list_directory(string directory, bool recursive)
 	return result;
 }
 
+string get_substr(string s, size_t beginning, size_t ending) {
+	//beginning inclusive, ending exclusive
+	if (beginning == -1) throw base_exception("get_substr: bad beginning index");
+	if (ending == -1) throw base_exception("get_substr: bad ending index"); //or may be just get the string until its end then?
+	return s.substr(beginning, ending - beginning);
+}
+
+int parse_int(string s) {
+	return atoi(s.c_str());
+}
+
+size_t convert_to_timestamp(string date_in_ISO_8601) {
+	if (date_in_ISO_8601 == "") return 0;
+
+	//2015-05-12T15:50:38Z	
+	size_t first_hyphen = date_in_ISO_8601.find('-');
+	size_t second_hyphen = date_in_ISO_8601.find('-', first_hyphen + 1);
+	size_t T_separator = date_in_ISO_8601.find('T', second_hyphen + 1);
+	size_t first_colon = date_in_ISO_8601.find(':', T_separator + 1);
+	size_t second_colon = date_in_ISO_8601.find(':', first_colon + 1);
+	size_t Z_separator = date_in_ISO_8601.find('Z', second_colon + 1);	
+	//now note '+1' which means if there ever was '-1' result of find(), we still did a valid find() from 0th char
+
+	string year = get_substr(date_in_ISO_8601, 0, first_hyphen);
+	string month = get_substr(date_in_ISO_8601, first_hyphen+1, second_hyphen);
+	string day = get_substr(date_in_ISO_8601, second_hyphen+1, T_separator);
+	string hour = get_substr(date_in_ISO_8601, T_separator+1, first_colon);
+	string minute = get_substr(date_in_ISO_8601, first_colon+1, second_colon);
+	string second = get_substr(date_in_ISO_8601, second_colon+1, Z_separator);
+	//now note only 'ending' argument was not '+1' (which means I could've make that function such that -1 means 'until the end')
+
+	int Y = parse_int(year);
+	int M = parse_int(month);
+	int D = parse_int(day);
+	int h = parse_int(hour);
+	int m = parse_int(minute);
+	int s = parse_int(second);
+
+	//ok, now I compose a timestamp based on my basic perception of time/date
+	//yeah, I know about leap years and leap seconds and all, but still we don't care there
+
+	size_t days = D-1;
+	for (int i = 1970; i < Y; ++i)
+		if ((i % 4 == 0 && i % 100 != 0) || (i % 400 == 0))
+			days += 366;
+		else
+			days += 365;
+
+	int mdays[] = { 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+	for (int i = 1; i < M; ++i) {
+		days += mdays[i-1];
+		if (i == 2)
+			if ((Y % 4 == 0 && Y % 100 != 0) || (Y % 400 == 0))
+				days += 1;
+	}
+
+	size_t hours = days * 24 + h;
+	size_t minutes = hours * 60 + m;
+	return minutes * 60 + s;
+}
+
+vector<file_record> dropbox_storage::list_directory_files(string directory, bool recursive) {
+	curl::request rq("https://api.dropboxapi.com/2/files/list_folder");
+	rq.add_header("Authorization: Bearer " + token);
+	rq.add_header("Content-Type: application/json");
+
+	Json json = Json::object({
+		{ "path", directory }, //"path": directory,
+		{ "recursive", recursive },
+		{ "include_media_info", false },
+		{ "include_deleted", false },
+	});
+
+	rq.add_post_field(json.dump());
+
+	string data = rq.execute();
+	string error_message;
+	Json answer = Json::parse(data, error_message);
+	if (error_message.size()) throw base_exception("Json Error 1: " + error_message + string("\n\n") + data);
+	if (answer["error_summary"].string_value().size())
+		throw base_exception("Dropbox Error: " + answer["error_summary"].string_value());
+
+	vector<file_record> result;
+	bool has_more = true;
+	while (has_more) {
+		for (auto item : answer["entries"].array_items()) {
+			result.push_back(
+				file_record(
+					item["path_lower"].string_value(),
+					item["name"].string_value(),
+					convert_to_timestamp(item["server_modified"].string_value())
+				)
+			);
+		}
+		has_more = answer["has_more"].bool_value();
+
+		if (has_more) {
+			curl::request rq("https://api.dropboxapi.com/2/files/list_folder/continue");
+			rq.add_header("Authorization: Bearer " + token);
+			rq.add_header("Content-Type: application/json");
+
+			Json json = Json::object({
+				{ "cursor", answer["cursor"].string_value() },
+			});
+
+			rq.add_post_field(json.dump());
+
+			data = rq.execute();
+			answer = Json::parse(data, error_message);
+			if (error_message.size()) throw base_exception("Json Error 2: " + error_message + string("\n\n") + data);
+			if (answer["error_summary"].string_value().size())
+				throw base_exception("Dropbox Error: " + answer["error_summary"].string_value());
+		}
+	}
+
+	return result;
+}
+
 bool dropbox_storage::download(string file) {
 	Json json = Json::object({
 		{ "path", file },
