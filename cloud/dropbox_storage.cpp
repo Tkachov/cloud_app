@@ -11,7 +11,6 @@ using std::cout;
 using namespace json11;
 
 #include "../curl/request.h"
-#include "../files/directory.h"
 
 namespace cloud { namespace dropbox {
 
@@ -82,9 +81,9 @@ string dropbox_storage::info() {
 	return rq.execute();	
 }
 
-bool dropbox_storage::upload(string file) {
+bool dropbox_storage::upload(string local_file, string remote_file) {
 	string file_binary_contents;
-	ifstream fin(file.c_str(), std::ifstream::binary);
+	ifstream fin(local_file.c_str(), std::ifstream::binary);
 	char buf[4096];
 	while (!fin.eof()) {
 		fin.read(buf, 4096);
@@ -94,12 +93,15 @@ bool dropbox_storage::upload(string file) {
 
 	string api_args;
 
-	string path = file;
-	if (file.find('/') != -1)
-		path = file.substr(file.rfind('/')+1);
-	if (file.find('\\') != -1)
-		path = file.substr(file.rfind('\\')+1);
-	path = "/" + path;
+	string path = remote_file;
+	if (path == "") {
+		path = local_file;
+		if (local_file.find('/') != -1)
+			path = local_file.substr(local_file.rfind('/') + 1);
+		if (local_file.find('\\') != -1)
+			path = local_file.substr(local_file.rfind('\\') + 1);
+		path = "/" + path;
+	}
 	string mode = "overwrite";
 	bool autorename = false;
 	bool mute = false;
@@ -117,7 +119,8 @@ bool dropbox_storage::upload(string file) {
 	rq.add_header("Dropbox-API-Arg", api_args);
 	rq.add_header("Content-Type: application/octet-stream");
 	rq.add_post_field(file_binary_contents);
-	cout << rq.execute();
+	string data = rq.execute();
+	//cout << data;
 
 	return false;
 }
@@ -242,7 +245,7 @@ string remove_prefix(string& prefixed, string& prefix) {
 	return result;
 }
 
-files::directory* dropbox_storage::list_directory_files(string directory, bool recursive) {
+vector<file_record> dropbox_storage::list_directory_files(string directory, bool recursive) {
 	curl::request rq("https://api.dropboxapi.com/2/files/list_folder");
 	rq.add_header("Authorization: Bearer " + token);
 	rq.add_header("Content-Type: application/json");
@@ -262,9 +265,6 @@ files::directory* dropbox_storage::list_directory_files(string directory, bool r
 	if (error_message.size()) throw base_exception("Json Error 1: " + error_message + string("\n\n") + data);
 	if (answer["error_summary"].string_value().size())
 		throw base_exception("Dropbox Error: " + answer["error_summary"].string_value());
-	
-	map<string, files::directory*> directories;
-	directories[directory] = new files::directory(directory); //root
 
 	vector<file_record> result;
 	bool has_more = true;
@@ -274,13 +274,11 @@ files::directory* dropbox_storage::list_directory_files(string directory, bool r
 				file_record(
 					item["path_lower"].string_value(),
 					item["name"].string_value(),
-					convert_to_timestamp(item["server_modified"].string_value())
+					item["size"].int_value(),					
+					convert_to_timestamp(item["server_modified"].string_value()),
+					item[".tag"].string_value() == "folder"
 				)
 			);
-
-			if (item[".tag"].string_value() == "folder") {
-				directories[item["path_lower"].string_value()] = new files::directory(item["path_lower"].string_value());
-			}
 		}
 		has_more = answer["has_more"].bool_value();
 
@@ -303,32 +301,12 @@ files::directory* dropbox_storage::list_directory_files(string directory, bool r
 		}
 	}
 
-	for (auto s : result) {
-		string p = s.get_path();
-		bool is_known_directory = (directories.count(p));
-
-		size_t idx = p.rfind('/');
-		if (idx != -1)
-			p = p.substr(0, idx);
-
-		if (is_known_directory) {
-			if(directories.count(p))
-				directories[p]->add_file(directories[s.get_path()]);
-			continue;
-		}
-
-		if (directories.count(p) == 0)
-			throw base_exception("file from unknown directory");
-
-		directories[p]->add_file(new files::file(s.get_path(), 0, s.get_timestamp()));
-	}
-
-	return directories[directory];
+	return result;
 }
 
-bool dropbox_storage::download(string file) {
+bool dropbox_storage::download(string remote_file, string local_file) {
 	Json json = Json::object({
-		{ "path", file },
+		{ "path", remote_file },
 	});
 
 	curl::request rq("https://content.dropboxapi.com/2/files/download");
@@ -338,12 +316,54 @@ bool dropbox_storage::download(string file) {
 	
 	string data = rq.execute();
 
-	string local_filename = "downloads" + file;
+	string local_filename = local_file;
+	if(local_filename == "")
+		local_filename = "downloads" + remote_file;
 	ofstream fout(local_filename.c_str(), std::ifstream::binary);
 	fout.write(data.c_str(), data.length());
 	fout.close();
 
-	return false;
+	return true;
+}
+
+bool dropbox_storage::delete_file(string file) {
+	Json json = Json::object({
+		{ "path", file },
+	});
+
+	curl::request rq("https://api.dropboxapi.com/2/files/delete");
+	rq.add_header("Authorization: Bearer " + token);
+	rq.add_header("Content-Type: application/json");
+	rq.add_post_field(json.dump());
+
+	string data = rq.execute();
+	string error_message;
+	Json answer = Json::parse(data, error_message);
+	if (error_message.size()) throw base_exception("Json Error: " + error_message + string("\n\n") + data);
+	if (answer["error_summary"].string_value().size())
+		return false;
+
+	return true;
+}
+
+bool dropbox_storage::create_directory(string file) {
+	Json json = Json::object({
+		{ "path", file },
+	});
+
+	curl::request rq("https://api.dropboxapi.com/2/files/create_folder");
+	rq.add_header("Authorization: Bearer " + token);
+	rq.add_header("Content-Type: application/json");
+	rq.add_post_field(json.dump());
+
+	string data = rq.execute();
+	string error_message;
+	Json answer = Json::parse(data, error_message);
+	if (error_message.size()) throw base_exception("Json Error: " + error_message + string("\n\n") + data);
+	if (answer["error_summary"].string_value().size())
+		return false;
+
+	return true;
 }
 
 void dropbox_storage::save(ofstream& fout) {

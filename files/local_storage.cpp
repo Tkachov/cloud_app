@@ -8,19 +8,20 @@
 #include <sys/stat.h>
 #include <stdio.h>
 #include <errno.h>
+#include <direct.h>
+
+#include <iostream>
+using std::cout;
 
 namespace files {
 
-file_record local_storage::get_file_by_path(string path) {
+file_record local_storage::get_file_by_path(string path) {	
 	struct _stat buf;
-	int result;	
-	char* filename = "crt_stat.c";	
-	
-	result = _stat(path.c_str(), &buf);
+	int result = _stat(path.c_str(), &buf);
 	if (result != 0)
 		throw base_exception("_stat");
 
-	return file_record(path, buf.st_mtime); //hell yeah -- that's UNIX timestamp
+	return file_record(path, buf.st_size, buf.st_mtime, S_ISDIR(buf.st_mode)); //hell yeah -- that's UNIX timestamp
 
 	/*
 	//this thingie prints date/time in "Thu Feb 07 14:39:36 2002" format
@@ -32,6 +33,9 @@ file_record local_storage::get_file_by_path(string path) {
 
 vector<file_record> local_storage::list_directory(string path, bool recursive, bool list_dots) {
 	vector<file_record> result;
+
+	if (path == "" || path.back() != '/')
+		path += '/';
 
 	vector<string> queue;
 	queue.push_back(path);
@@ -67,6 +71,50 @@ vector<file_record> local_storage::list_directory(string path, bool recursive, b
 	}
 
 	return result;
+}
+
+bool local_storage::delete_regular_file(file_record& rec) {
+	if (rec.is_directory()) {
+		cout << "\tfailed to remove " << rec.get_path() << " (is a directory)\n";
+		return false;
+	}
+	bool res = remove(rec.get_path().c_str()) == 0; //from cstdio
+	if (!res) cout << "\tfailed to remove " << rec.get_path() << "\n";
+	return res;
+}
+
+bool local_storage::delete_file_by_record(file_record& rec) {
+	if (rec.is_directory()) {
+		vector<file_record> listed = list_directory(rec.get_path());
+		for (file_record& f : listed)
+			if (!delete_file_by_record(f))
+				cout << "failed to remove " << f.get_path() << "\n";
+		bool res = _rmdir(rec.get_path().c_str()) == 0;
+		if(!res) cout << "\tfailed to remove " << rec.get_path() << "\n";
+		return res;
+	} else {
+		return delete_regular_file(rec);		
+	}
+
+	return false;
+}
+
+bool local_storage::delete_file(string path) {
+	try {
+		file_record rec = get_file_by_path(path);
+		return delete_file_by_record(rec);
+	} catch(base_exception& e) {
+		cout << "exception " << e.what() << "\n";
+	} catch (...) {
+		//stat file not found => cannot be deleted => false
+		cout << "unknown exception\n";
+	}
+	cout << "\tfailed to remove " << path << " (stat / not found)\n";
+	return false;
+}
+
+bool local_storage::create_directory(string path) {
+	return _mkdir(path.c_str()) == 0;
 }
 
 } //namespace files

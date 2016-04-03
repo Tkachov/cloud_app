@@ -5,8 +5,6 @@ using std::ifstream;
 #include "storage.h"
 using namespace cloud;
 
-#include "../files/directory.h"
-
 namespace cloud { namespace dropbox {
 
 class dropbox_storage: public storage {
@@ -27,10 +25,12 @@ public:
 	~dropbox_storage();
 
 	virtual string info();
-	virtual bool upload(string file);
+	virtual bool upload(string local_file, string remote_file);
 	virtual vector<string> list_directory(string directory, bool recursive);
-	virtual files::directory* list_directory_files(string directory, bool recursive);
-	virtual bool download(string file);
+	virtual vector<file_record> list_directory_files(string directory, bool recursive);
+	virtual bool download(string remote_file, string local_file);
+	virtual bool delete_file(string file);
+	virtual bool create_directory(string file);
 
 	virtual void save(ofstream& fout);
 	virtual string name() const;

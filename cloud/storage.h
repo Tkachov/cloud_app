@@ -8,7 +8,6 @@ using std::vector;
 
 #include "../base_exception.h"
 #include "../files/file_record.h"
-#include "../files/directory.h"
 using files::file_record;
 
 namespace cloud {
@@ -17,10 +16,12 @@ class storage {
 public:	
 	//api
 	virtual string info() = 0;
-	virtual bool upload(string file) = 0;
+	virtual bool upload(string local_file, string remote_file = "") = 0;
 	virtual vector<string> list_directory(string directory, bool recursive = false) = 0; //TODO: introduce file/directory clases and use vector<file> or directory
-	virtual files::directory* list_directory_files(string directory, bool recursive = false) = 0;
-	virtual bool download(string file) = 0;
+	virtual vector<file_record> list_directory_files(string directory, bool recursive = false) = 0;
+	virtual bool download(string remote_file, string local_file = "") = 0;
+	virtual bool delete_file(string file) = 0;
+	virtual bool create_directory(string file) = 0;
 	bool sync(string local_syncing_directory_root, string remote_syncing_directory_root, bool recursive = true);
 
 	//utils
