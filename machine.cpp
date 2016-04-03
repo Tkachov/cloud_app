@@ -49,6 +49,7 @@ void machine::work() {
 		answers.push_back(std::make_pair("Upload a file", &machine::upload));
 		answers.push_back(std::make_pair("List directory", &machine::list));
 		answers.push_back(std::make_pair("Download file", &machine::download));
+		answers.push_back(std::make_pair("Run sync", &machine::do_sync));
 	}
 	answers.push_back(std::make_pair("Quit", &machine::quit));
 	ask(answers);
@@ -188,6 +189,19 @@ void machine::download() {
 
 	try {
 		manager.get_current_storage()->download(filename);		
+	}
+	catch (base_exception& e) {
+		cout << e.what() << "\n";
+	}
+	catch (...) {
+		cout << "failed\n";
+	}
+}
+
+void machine::do_sync() {
+	try {
+		//just hardcoded paths for now
+		manager.get_current_storage()->sync("downloads/saves/", "/saves/", false); //recursive is not working, so I use false to not confuse anyone
 	}
 	catch (base_exception& e) {
 		cout << e.what() << "\n";

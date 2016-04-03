@@ -17,6 +17,7 @@ public:
 	virtual bool upload(string file) = 0;
 	virtual vector<string> list_directory(string directory, bool recursive = false) = 0; //TODO: introduce file/directory clases and use vector<file> or directory
 	virtual bool download(string file) = 0;
+	bool sync(string local_syncing_directory_root, string remote_syncing_directory_root, bool recursive = true);
 
 	//utils
 	virtual void save(ofstream& fout) = 0;

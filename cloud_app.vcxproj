@@ -69,19 +69,19 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\include;$(IncludePath)</IncludePath>
+    <IncludePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\include;D:\Projects\Working On\Cloud App\dirent-1.21\include;$(IncludePath)</IncludePath>
     <ExecutablePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\bin;$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <IncludePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\include;D:\Projects\Working On\Cloud App\dirent-1.21\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ExecutablePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\bin;$(VC_ExecutablePath_x86);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(SystemRoot)\SysWow64;$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <IncludePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\include;D:\Projects\Working On\Cloud App\dirent-1.21\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ExecutablePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\bin;$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IncludePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\include;D:\Projects\Working On\Cloud App\dirent-1.21\include;$(VC_IncludePath);$(WindowsSDK_IncludePath);</IncludePath>
     <ExecutablePath>D:\Projects\Working On\Cloud App\curl-7.48.0\builds\libcurl-vc-x64-release-dll-ipv6-sspi-winssl\bin;$(VC_ExecutablePath_x64);$(WindowsSDK_ExecutablePath);$(VS_ExecutablePath);$(MSBuild_ExecutablePath);$(FxCopDir);$(PATH);</ExecutablePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -143,6 +143,9 @@
   <ItemGroup>
     <ClCompile Include="cloud\dropbox_storage.cpp" />
     <ClCompile Include="curl\single_threaded_curl.cpp" />
+    <ClCompile Include="files\file_record.cpp" />
+    <ClCompile Include="files\local_storage.cpp" />
+    <ClCompile Include="cloud\storage.cpp" />
     <ClCompile Include="json\json11.cpp" />
     <ClCompile Include="machine.cpp" />
     <ClCompile Include="main.cpp" />
@@ -154,6 +157,8 @@
     <ClInclude Include="cloud\dropbox_storage.h" />
     <ClInclude Include="base_exception.h" />
     <ClInclude Include="curl\single_threaded_curl.h" />
+    <ClInclude Include="files\file_record.h" />
+    <ClInclude Include="files\local_storage.h" />
     <ClInclude Include="json\json11.hpp" />
     <ClInclude Include="machine.h" />
     <ClInclude Include="curl\request.h" />

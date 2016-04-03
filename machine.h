@@ -27,6 +27,7 @@ class machine {
 	void upload();
 	void list();
 	void download();
+	void do_sync();
 	void quit() { working = false; }
 
 public:
