@@ -1,8 +1,10 @@
 #include "storage.h"
 
 #include <iostream>
+#include <algorithm>
 using std::cout;
 using std::pair;
+using std::sort;
 
 #include "../files/local_storage.h"
 #include "../files/file_record.h"
@@ -74,6 +76,15 @@ void calculate_size_and_timestamp(string& directory_name, vector<file_record>& f
 		}
 }
 
+void remove_all_contents(vector<file_record>& files_list, string directory_name) {
+	vector<file_record> result;
+	for (file_record& f : files_list) {
+		if (f.get_path().find(directory_name) != 0)
+			result.push_back(f);
+	}
+	files_list = result;
+}
+
 bool storage::sync(string local_syncing_directory_root, string remote_syncing_directory_root, bool recursive) {
 	//ok, so that's VERY not cool
 	if (remote_syncing_directory_root == "" || remote_syncing_directory_root.back() != '/')
@@ -106,7 +117,11 @@ bool storage::sync(string local_syncing_directory_root, string remote_syncing_di
 	//----------
 
 	//ok I don't like this, but I think that's more optimized
-	vector<char> remote_files_found(remote_files.size(), 0); //0 means 'not found', 1 means 'found'	
+	vector<char> remote_files_found(remote_files.size(), 0); //0 means 'not found', 1 means 'found'
+	for (int i = 0; i < remote_files.size(); ++i)
+		if (remote_files[i].get_path() == remote_dir) {
+			remote_files_found[i] = 1;
+		}
 	//----------
 
 	vector<file_record> new_local_files, new_remote_files;
@@ -129,13 +144,17 @@ bool storage::sync(string local_syncing_directory_root, string remote_syncing_di
 
 	for (size_t i = 0; i < remote_files.size(); ++i)
 		if (remote_files_found[i] == 0)
-			new_remote_files.push_back(remote_files[i]);
+			new_remote_files.push_back(remote_files[i]);	
 
 	//TODO: now sort the vectors
-	//TODO: upload <new_local>
-	//TODO: download <new_remote>
-	//TODO: sync <duplicates>
-
+	sort(new_local_files.begin(), new_local_files.end(), [](file_record& a, file_record& b) { return a.get_path().size() < b.get_path().size(); });
+	sort(new_remote_files.begin(), new_remote_files.end(), [](file_record& a, file_record& b) { return a.get_path().size() < b.get_path().size(); });
+	sort(duplicate_files.begin(), duplicate_files.end(),
+		[](pair<file_record, file_record>& a, pair<file_record, file_record>& b) {			
+			return a.second.get_path().size() < b.second.get_path().size();
+		}
+	);	
+	
 	cout << "New local files:\n";
 	for (auto f : new_local_files)
 		cout << f.get_path() << " " << f.get_timestamp() << "\n";
@@ -146,7 +165,119 @@ bool storage::sync(string local_syncing_directory_root, string remote_syncing_di
 
 	cout << "\nDuplicate files:\n";
 	for (auto f : duplicate_files)
-		cout << f.first.get_path() << " " << f.first.get_timestamp() << "\n" << f.second.get_path() << " " << f.second.get_timestamp() << "\n----\n";
+		cout << f.first.get_path() << " " << f.first.get_timestamp() << "\n" << f.second.get_path() << " " << f.second.get_timestamp() << "\n----\n";	
+
+	//TODO: sync <duplicates> first [may be files become directories]
+	for (auto pr: duplicate_files) {
+		file_record& local = pr.first;
+		file_record& remote = pr.second;
+		if (local.is_directory() == remote.is_directory()) {
+			//ok, just upload/download a file
+			//if it's a directory, well... do nothing
+			if (local.is_directory()) {
+				cout << "directory updated (nothing to do with it) => applied\n";
+				continue;
+			}
+
+			//TODO: download & upload for two args
+			if (local.get_timestamp() < remote.get_timestamp()) {
+				cout << "remote file copy updated (downloading...)";
+				download(remote.get_path(), local.get_path());
+				cout << " => applied\n";
+			} else {
+				cout << "local file copy updated (uploading...)";
+				upload(local.get_path(), remote.get_path());
+				cout << " => applied\n";
+			}
+		} else {
+			//damn
+			//we have to delete a directory
+			//and place a file instead
+			//(or delete a file and place a directory)
+			//in case we delete a directory, we have to remove all it's contents from <local_new> or <remote_new> vector
+			if (local.get_timestamp() < remote.get_timestamp()) {
+				cout << "local and remote type differs, local is older - deleting local\n";
+
+				if(!local_storage::delete_file(local.get_path()))
+					cout << "failed to remove " << local.get_path() << "\n";
+				if (local.is_directory()) {
+					//find contents of this directory in <new_local> and remove them
+					cout << "local is directory (" << local.get_path() << "):\n";
+					cout << "removing all it's contents from <new_local> (were " <<new_local_files.size()<<")\n";
+					remove_all_contents(new_local_files, local.get_path());
+					cout << "removed (now " << new_local_files.size() << ")\n";
+				}
+
+				if (remote.is_directory()) {
+					cout << "remote is directory (creating)";
+					local_storage::create_directory(local.get_path());
+					cout << " = > applied\n";
+				} else {
+					cout << "remote is file (downloading)";
+					download(remote.get_path(), local.get_path());
+					cout << " = > applied\n";
+				}
+			} else {
+				cout << "local and remote type differs, remote is older - deleting remote\n";
+
+				delete_file(remote.get_path());
+				if (remote.is_directory()) {					
+					//find contents of this directory in <new_remote> and remove them
+					cout << "remote is directory (" << remote.get_path() << "):\n";
+					cout << "removing all it's contents from <new_remote> (were " << new_remote_files.size() << ")\n";
+					remove_all_contents(new_remote_files, remote.get_path());
+					cout << "removed (now " << new_remote_files.size() << ")\n";
+				}
+
+				if (local.is_directory()) {
+					cout << "local is directory (creating)";
+					create_directory(remote.get_path());
+					cout << " = > applied\n";
+				} else {
+					cout << "local is file (uploading)";
+					upload(local.get_path(), remote.get_path());
+					cout << " = > applied\n";
+				}
+			}
+		}
+	}
+
+	cout << "\nDUPLICATES SYNC COMPLETE\n\n";
+
+	//TODO: upload <new_local>
+	for (file_record& f: new_local_files) {
+		string path = remote_syncing_directory_root + remove_prefix(f.get_path(), local_syncing_directory_root);
+
+		if (f.is_directory()) {
+			cout << "new local directory " << f.get_name() << " (creating remote)";
+			create_directory(path);
+			cout << " = > applied\n";
+		} else {
+			cout << "new local file " << f.get_name() << " (uploading)";
+			upload(f.get_path(), path);
+			cout << " = > applied\n";
+		}
+	}
+
+	cout << "\nLOCAL UPLOADING COMPLETE\n\n";
+
+	//TODO: download <new_remote>	
+	for (file_record& f: new_remote_files) {
+		string path = local_syncing_directory_root + remove_prefix(f.get_path(), remote_syncing_directory_root);
+
+		if (f.is_directory()) {
+			cout << "new remote directory " << f.get_name() << " (creating local)";
+			local_storage::create_directory(path);
+			cout << " = > applied\n";
+		}
+		else {
+			cout << "new remote file " << f.get_name() << " (downloading)";
+			download(f.get_path(), path);
+			cout << " = > applied\n";
+		}
+	}
+
+	cout << "\nREMOTE DOWNLOADING COMPLETE\n\n";
 
 	return false;
 }
