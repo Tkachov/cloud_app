@@ -242,7 +242,7 @@ string remove_prefix(string& prefixed, string& prefix) {
 	return result;
 }
 
-vector<file_record> dropbox_storage::list_directory_files(string directory, bool recursive) {
+files::directory* dropbox_storage::list_directory_files(string directory, bool recursive) {
 	curl::request rq("https://api.dropboxapi.com/2/files/list_folder");
 	rq.add_header("Authorization: Bearer " + token);
 	rq.add_header("Content-Type: application/json");
@@ -303,10 +303,6 @@ vector<file_record> dropbox_storage::list_directory_files(string directory, bool
 		}
 	}
 
-	for (auto s : directories) {
-		cout << s.first << "\n";
-	}
-
 	for (auto s : result) {
 		string p = s.get_path();
 		bool is_known_directory = (directories.count(p));
@@ -327,9 +323,7 @@ vector<file_record> dropbox_storage::list_directory_files(string directory, bool
 		directories[p]->add_file(new files::file(s.get_path(), 0, s.get_timestamp()));
 	}
 
-	directories[directory]->print();
-
-	return result;
+	return directories[directory];
 }
 
 bool dropbox_storage::download(string file) {

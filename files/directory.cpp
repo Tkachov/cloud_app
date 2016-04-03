@@ -27,9 +27,6 @@ void directory::add_file(file* f) {
 	contents[f->get_name()] = f;
 	size += f->get_size();
 	timestamp = max(timestamp, f->get_timestamp());
-
-	cout << path << "\n";
-	cout << "added file: " << f->get_name() << "\n\n";
 }
 
 void directory::recalculate() {

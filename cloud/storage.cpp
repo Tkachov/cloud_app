@@ -46,14 +46,15 @@ bool storage::sync(string local_syncing_directory_root, string remote_syncing_di
 	string remote_dir = remote_syncing_directory_root;
 	if (remote_dir != "" && remote_dir.back() == '/')
 		remote_dir.pop_back(); //it happens Dropbox doesn't like '/' in the end and I do
-	remote_files = list_directory_files(remote_dir, recursive);
+	files::directory* dir = list_directory_files(remote_dir, recursive);
+	dir->print();
 	/*
 	vector<string> remote_names = list_directory(remote_dir, recursive);
 	for (auto name : remote_names)
 		remote_files.push_back(file_record(name, 0));
 	*/
 	//----------
-
+	/*
 	//ok I don't like this, but I think that's more optimized
 	vector<char> remote_files_found(remote_files.size(), 0); //0 means 'not found', 1 means 'found'	
 	//----------
@@ -96,7 +97,7 @@ bool storage::sync(string local_syncing_directory_root, string remote_syncing_di
 	cout << "\nDuplicate files:\n";
 	for (auto f : duplicate_files)
 		cout << f.first.get_path() << " " << f.first.get_timestamp() << "\n" << f.second.get_path() << " " << f.second.get_timestamp() << "\n----\n";
-
+	*/
 	return false;
 }
 
