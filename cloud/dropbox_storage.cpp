@@ -138,7 +138,7 @@ vector<string> dropbox_storage::list_directory(string directory, bool recursive)
 	string data = rq.execute();
 	string error_message;
 	Json answer = Json::parse(data, error_message);
-	if (error_message.size()) throw base_exception("Json Error: " + error_message + string("\n\n") + data);
+	if (error_message.size()) throw base_exception("Json Error 1: " + error_message + string("\n\n") + data);
 	if (answer["error_summary"].string_value().size())
 		throw base_exception("Dropbox Error: " + answer["error_summary"].string_value());
 
@@ -163,7 +163,7 @@ vector<string> dropbox_storage::list_directory(string directory, bool recursive)
 			
 			data = rq.execute();
 			answer = Json::parse(data, error_message);
-			if (error_message.size()) throw base_exception("Json Error: " + error_message + string("\n\n") + data);
+			if (error_message.size()) throw base_exception("Json Error 2: " + error_message + string("\n\n") + data);
 			if (answer["error_summary"].string_value().size())
 				throw base_exception("Dropbox Error: " + answer["error_summary"].string_value());
 		}
