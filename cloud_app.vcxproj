@@ -143,6 +143,8 @@
   <ItemGroup>
     <ClCompile Include="cloud\dropbox_storage.cpp" />
     <ClCompile Include="curl\single_threaded_curl.cpp" />
+    <ClCompile Include="files\directory.cpp" />
+    <ClCompile Include="files\file.cpp" />
     <ClCompile Include="files\file_record.cpp" />
     <ClCompile Include="files\local_storage.cpp" />
     <ClCompile Include="cloud\storage.cpp" />
@@ -157,6 +159,8 @@
     <ClInclude Include="cloud\dropbox_storage.h" />
     <ClInclude Include="base_exception.h" />
     <ClInclude Include="curl\single_threaded_curl.h" />
+    <ClInclude Include="files\directory.h" />
+    <ClInclude Include="files\file.h" />
     <ClInclude Include="files\file_record.h" />
     <ClInclude Include="files\local_storage.h" />
     <ClInclude Include="json\json11.hpp" />

@@ -45,6 +45,12 @@
     <ClCompile Include="cloud\storage.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="files\file.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="files\directory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="machine.h">
@@ -75,6 +81,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="files\file_record.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="files\file.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="files\directory.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

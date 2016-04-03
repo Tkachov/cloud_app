@@ -11,6 +11,7 @@ using std::cout;
 using namespace json11;
 
 #include "../curl/request.h"
+#include "../files/directory.h"
 
 namespace cloud { namespace dropbox {
 
@@ -233,6 +234,14 @@ size_t convert_to_timestamp(string date_in_ISO_8601) {
 	return minutes * 60 + s;
 }
 
+string remove_prefix(string& prefixed, string& prefix) {
+	string result = prefixed;
+	size_t index = result.find(prefix);
+	if (index != -1)
+		return result.replace(index, prefix.size(), "");
+	return result;
+}
+
 vector<file_record> dropbox_storage::list_directory_files(string directory, bool recursive) {
 	curl::request rq("https://api.dropboxapi.com/2/files/list_folder");
 	rq.add_header("Authorization: Bearer " + token);
@@ -253,6 +262,9 @@ vector<file_record> dropbox_storage::list_directory_files(string directory, bool
 	if (error_message.size()) throw base_exception("Json Error 1: " + error_message + string("\n\n") + data);
 	if (answer["error_summary"].string_value().size())
 		throw base_exception("Dropbox Error: " + answer["error_summary"].string_value());
+	
+	map<string, files::directory*> directories;
+	directories[directory] = new files::directory(directory); //root
 
 	vector<file_record> result;
 	bool has_more = true;
@@ -265,6 +277,10 @@ vector<file_record> dropbox_storage::list_directory_files(string directory, bool
 					convert_to_timestamp(item["server_modified"].string_value())
 				)
 			);
+
+			if (item[".tag"].string_value() == "folder") {
+				directories[item["path_lower"].string_value()] = new files::directory(item["path_lower"].string_value());
+			}
 		}
 		has_more = answer["has_more"].bool_value();
 
@@ -286,6 +302,32 @@ vector<file_record> dropbox_storage::list_directory_files(string directory, bool
 				throw base_exception("Dropbox Error: " + answer["error_summary"].string_value());
 		}
 	}
+
+	for (auto s : directories) {
+		cout << s.first << "\n";
+	}
+
+	for (auto s : result) {
+		string p = s.get_path();
+		bool is_known_directory = (directories.count(p));
+
+		size_t idx = p.rfind('/');
+		if (idx != -1)
+			p = p.substr(0, idx);
+
+		if (is_known_directory) {
+			if(directories.count(p))
+				directories[p]->add_file(directories[s.get_path()]);
+			continue;
+		}
+
+		if (directories.count(p) == 0)
+			throw base_exception("file from unknown directory");
+
+		directories[p]->add_file(new files::file(s.get_path(), 0, s.get_timestamp()));
+	}
+
+	directories[directory]->print();
 
 	return result;
 }
