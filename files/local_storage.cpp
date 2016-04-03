@@ -20,7 +20,7 @@ file_record local_storage::get_file_by_path(string path) {
 	if (result != 0)
 		throw base_exception("_stat");
 
-	return file_record(path, buf.st_mtime); //hell yeah -- that's UNIX timestamp
+	return file_record(path, buf.st_size, buf.st_mtime, S_ISDIR(buf.st_mode)); //hell yeah -- that's UNIX timestamp
 
 	/*
 	//this thingie prints date/time in "Thu Feb 07 14:39:36 2002" format

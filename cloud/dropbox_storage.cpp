@@ -11,7 +11,6 @@ using std::cout;
 using namespace json11;
 
 #include "../curl/request.h"
-#include "../files/directory.h"
 
 namespace cloud { namespace dropbox {
 
@@ -242,7 +241,7 @@ string remove_prefix(string& prefixed, string& prefix) {
 	return result;
 }
 
-files::directory* dropbox_storage::list_directory_files(string directory, bool recursive) {
+vector<file_record> dropbox_storage::list_directory_files(string directory, bool recursive) {
 	curl::request rq("https://api.dropboxapi.com/2/files/list_folder");
 	rq.add_header("Authorization: Bearer " + token);
 	rq.add_header("Content-Type: application/json");
@@ -262,9 +261,6 @@ files::directory* dropbox_storage::list_directory_files(string directory, bool r
 	if (error_message.size()) throw base_exception("Json Error 1: " + error_message + string("\n\n") + data);
 	if (answer["error_summary"].string_value().size())
 		throw base_exception("Dropbox Error: " + answer["error_summary"].string_value());
-	
-	map<string, files::directory*> directories;
-	directories[directory] = new files::directory(directory); //root
 
 	vector<file_record> result;
 	bool has_more = true;
@@ -274,13 +270,11 @@ files::directory* dropbox_storage::list_directory_files(string directory, bool r
 				file_record(
 					item["path_lower"].string_value(),
 					item["name"].string_value(),
-					convert_to_timestamp(item["server_modified"].string_value())
+					item["size"].int_value(),					
+					convert_to_timestamp(item["server_modified"].string_value()),
+					item[".tag"].string_value() == "folder"
 				)
 			);
-
-			if (item[".tag"].string_value() == "folder") {
-				directories[item["path_lower"].string_value()] = new files::directory(item["path_lower"].string_value());
-			}
 		}
 		has_more = answer["has_more"].bool_value();
 
@@ -303,27 +297,7 @@ files::directory* dropbox_storage::list_directory_files(string directory, bool r
 		}
 	}
 
-	for (auto s : result) {
-		string p = s.get_path();
-		bool is_known_directory = (directories.count(p));
-
-		size_t idx = p.rfind('/');
-		if (idx != -1)
-			p = p.substr(0, idx);
-
-		if (is_known_directory) {
-			if(directories.count(p))
-				directories[p]->add_file(directories[s.get_path()]);
-			continue;
-		}
-
-		if (directories.count(p) == 0)
-			throw base_exception("file from unknown directory");
-
-		directories[p]->add_file(new files::file(s.get_path(), 0, s.get_timestamp()));
-	}
-
-	return directories[directory];
+	return result;
 }
 
 bool dropbox_storage::download(string file) {
